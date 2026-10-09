@@ -8,7 +8,6 @@ bool PaymentProcessor::chargeCreditCard(const std::string& customerName,
                                         const std::string& cardLastFour,
                                         int totalCents,
                                         const std::string& orderId) {
-    // Classroom simulation: do not enter real payment information.
     std::error_code error;
     std::filesystem::create_directories("payments", error);
     if (error) {

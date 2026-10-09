@@ -19,7 +19,6 @@ bool OrderProcessor::placeOrder(int productId, int quantity,
         return false;
     }
 
-    // Tight coupling: this class knows how InventoryManager stores products.
     int productIndex = -1;
     for (int i = 0; i < inventory.productCount; ++i) {
         if (inventory.products[i].id == productId) {
@@ -46,7 +45,6 @@ bool OrderProcessor::placeOrder(int productId, int quantity,
     const std::string orderId = std::to_string(timestamp) + "_" +
                                 std::to_string(nextOrderNumber++);
 
-    // Tight coupling: directly creates and invokes a specific payment method.
     PaymentProcessor payment;
     if (!payment.chargeCreditCard(customerName, cardLastFour, totalCents, orderId)) {
         std::cout << "Order canceled: payment record could not be saved.\n";

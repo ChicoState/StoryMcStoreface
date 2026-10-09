@@ -3,7 +3,6 @@
 
 #include <string>
 
-// Intentionally exposes its storage to other modules.
 class InventoryManager {
 public:
     struct Product {
