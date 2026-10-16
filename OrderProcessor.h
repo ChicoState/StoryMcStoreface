@@ -2,6 +2,7 @@
 #define ORDER_PROCESSOR_H
 
 #include "InventoryManager.h"
+#include "PaymentTypes.h"
 #include <string>
 
 class OrderProcessor {
@@ -11,7 +12,7 @@ public:
     bool placeOrder(int productId, int quantity,
                     const std::string& customerName,
                     const std::string& customerEmail,
-                    const std::string& cardLastFour);
+                    IPaymentType& payment);
 
 private:
     InventoryManager& inventory;

@@ -1,11 +1,41 @@
 #include "OrderProcessor.h"
 
 #include "NotificationService.h"
-#include "PaymentProcessor.h"
 
 #include <chrono>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <sstream>
+
+namespace {
+
+bool savePaymentReceipt(const PaymentRequest& request, const PaymentResult& payment) {
+    std::error_code error;
+    std::filesystem::create_directories("payments", error);
+    if (error) {
+        std::cerr << "Could not create payments folder: " << error.message() << '\n';
+        return false;
+    }
+
+    const std::string filename = "payments/IOU_" + request.orderId + ".txt";
+    std::ofstream file(filename);
+    if (!file) {
+        std::cerr << "Could not create IOU file.\n";
+        return false;
+    }
+
+    file << "SIMULATED PAYMENT - NO MONEY TRANSFERRED\n";
+    file << "Order: " << request.orderId << '\n';
+    file << "Customer: " << request.customerName << '\n';
+    file << "Payment method: " << payment.receiptDetails << '\n';
+    file << "Amount owed: $" << request.totalCents / 100 << '.';
+    if (request.totalCents % 100 < 10) file << '0';
+    file << request.totalCents % 100 << '\n';
+    return static_cast<bool>(file);
+}
+
+}  // namespace
 
 OrderProcessor::OrderProcessor(InventoryManager& inventory)
     : inventory(inventory), nextOrderNumber(1) {}
@@ -13,7 +43,7 @@ OrderProcessor::OrderProcessor(InventoryManager& inventory)
 bool OrderProcessor::placeOrder(int productId, int quantity,
                                 const std::string& customerName,
                                 const std::string& customerEmail,
-                                const std::string& cardLastFour) {
+                                IPaymentType& payment) {
     if (quantity <= 0) {
         std::cout << "Quantity must be positive.\n";
         return false;
@@ -45,8 +75,13 @@ bool OrderProcessor::placeOrder(int productId, int quantity,
     const std::string orderId = std::to_string(timestamp) + "_" +
                                 std::to_string(nextOrderNumber++);
 
-    PaymentProcessor payment;
-    if (!payment.chargeCreditCard(customerName, cardLastFour, totalCents, orderId)) {
+    const PaymentRequest request = {orderId, customerName, customerEmail, totalCents};
+    const PaymentResult paymentResult = payment.process(request);
+    if (!paymentResult.success) {
+        std::cout << "Order canceled: " << paymentResult.errorMessage << '\n';
+        return false;
+    }
+    if (!savePaymentReceipt(request, paymentResult)) {
         std::cout << "Order canceled: payment record could not be saved.\n";
         return false;
     }
@@ -63,6 +98,7 @@ bool OrderProcessor::placeOrder(int productId, int quantity,
     message << "Total: $" << totalCents / 100 << '.';
     if (totalCents % 100 < 10) message << '0';
     message << totalCents % 100 << "\n";
+    message << "Payment: " << paymentResult.receiptDetails << "\n";
     message << "An IOU file was saved locally; no real payment was made.";
 
     NotificationService notifications;

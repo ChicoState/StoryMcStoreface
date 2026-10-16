@@ -1,6 +1,6 @@
 # StoryMcStoreface
 
-StoryMcStoreface is a small C++ console application for viewing inventory and placing simulated orders. Payments are recorded as local IOU files; no real payment is processed.
+StoryMcStoreface is a small C++ console application for viewing inventory and placing simulated orders. Payments are recorded as local IOU files; no real payment is processed. Checkout supports fake credit cards, promo codes, and store credit.
 
 ## Getting Started
 
@@ -36,6 +36,14 @@ make run
 
 The menu allows you to view inventory, place an order, or exit. When an order is placed, a simulated payment receipt is written to the `payments/` directory.
 
+### Payment demos
+
+- Credit card: provide any non-empty fake last four digits.
+- Promo code: `THANKYOU25` covers one order of up to $25.00 per customer email.
+- Store credit: `storecredit@example.com` starts with $50.00 of in-memory credit.
+
+Promo redemptions and store-credit balances reset whenever the application exits.
+
 ###  Manually Clean Build Artifacts
 
 To remove the executable, object files, and dependency files:
@@ -50,6 +58,7 @@ make clean
 | --- | --- |
 | `make` or `make build` | Build the application |
 | `make run` | Build, then launch the application |
+| `make test` | Run payment behavior tests |
 | `make clean` | Remove generated build artifacts |
 | `./test_runner.sh` | Build and run the interactive program |
 

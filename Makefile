@@ -5,7 +5,7 @@ TARGET ?= storymcstoreface
 SOURCES := $(filter-out PaymentTypesTests.cpp,$(wildcard *.cpp))
 OBJECTS := $(SOURCES:.cpp=.o)
 TEST_TARGET ?= payment_tests
-TEST_SOURCES := PaymentTypesTests.cpp PaymentTypes.cpp
+TEST_SOURCES := PaymentTypesTests.cpp $(filter-out main.cpp,$(SOURCES))
 
 .PHONY: all build run test clean
 
