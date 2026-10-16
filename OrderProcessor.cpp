@@ -82,6 +82,7 @@ bool OrderProcessor::placeOrder(int productId, int quantity,
         return false;
     }
     if (!savePaymentReceipt(request, paymentResult)) {
+        payment.rollback(request);
         std::cout << "Order canceled: payment record could not be saved.\n";
         return false;
     }

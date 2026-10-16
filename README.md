@@ -85,11 +85,27 @@ classDiagram
         -InventoryManager inventory
         -int nextOrderNumber
         +OrderProcessor(InventoryManager inventory)
-        +bool placeOrder(int productId, int quantity, string customerName, string customerEmail, string cardLastFour)
+        +bool placeOrder(int productId, int quantity, string customerName, string customerEmail, IPaymentType payment)
     }
 
-    class PaymentProcessor {
-        +bool chargeCreditCard(string customerName, string cardLastFour, int totalCents, string orderId)
+    class IPaymentType {
+        <<interface>>
+        +PaymentResult process(PaymentRequest request)
+        +void rollback(PaymentRequest request)
+    }
+
+    class CreditCardPayment
+    class PromoCodePayment
+    class StoreCreditPayment
+
+    IPaymentType <|.. CreditCardPayment
+    IPaymentType <|.. PromoCodePayment
+    IPaymentType <|.. StoreCreditPayment
+
+    class PaymentRequest {
+        +string orderId
+        +string customerEmail
+        +int totalCents
     }
 
     class NotificationService {
@@ -98,8 +114,8 @@ classDiagram
 
     InventoryManager *-- Product : stores
     OrderProcessor --> InventoryManager : reads and updates
-    OrderProcessor ..> PaymentProcessor : creates
+    OrderProcessor ..> IPaymentType : receives
     OrderProcessor ..> NotificationService : creates
 ```
 
-Planned improvements include encapsulating inventory storage, injecting payment and notification interfaces into `OrderProcessor`, and isolating payment persistence behind a repository abstraction.
+Planned improvements include encapsulating inventory storage, injecting a notification interface into `OrderProcessor`, and isolating payment persistence behind a repository abstraction.

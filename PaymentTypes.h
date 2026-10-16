@@ -22,6 +22,7 @@ class IPaymentType {
 public:
     virtual ~IPaymentType() = default;
     virtual PaymentResult process(const PaymentRequest& request) = 0;
+    virtual void rollback(const PaymentRequest&) {}
 };
 
 class CreditCardPayment : public IPaymentType {
@@ -38,6 +39,7 @@ public:
     void addCode(const std::string& code, int valueCents);
     bool redeem(const std::string& code, const std::string& customerEmail,
                 int totalCents, std::string& errorMessage);
+    void undoRedemption(const std::string& code, const std::string& customerEmail);
 
 private:
     std::map<std::string, int> valuesByCode;
@@ -48,10 +50,12 @@ class PromoCodePayment : public IPaymentType {
 public:
     PromoCodePayment(std::string code, PromoCodeLedger& promos);
     PaymentResult process(const PaymentRequest& request) override;
+    void rollback(const PaymentRequest& request) override;
 
 private:
     std::string code;
     PromoCodeLedger& promos;
+    bool processed = false;
 };
 
 class StoreCreditLedger {
@@ -68,9 +72,11 @@ class StoreCreditPayment : public IPaymentType {
 public:
     explicit StoreCreditPayment(StoreCreditLedger& credit);
     PaymentResult process(const PaymentRequest& request) override;
+    void rollback(const PaymentRequest& request) override;
 
 private:
     StoreCreditLedger& credit;
+    bool processed = false;
 };
 
 #endif

@@ -31,6 +31,18 @@ void restrictsPromoCodeToOneRedemptionPerCustomer() {
     assert(!second.success);
 }
 
+void restoresPromoCodeRedemptionWhenCheckoutIsRolledBack() {
+    PromoCodeLedger promos;
+    promos.addCode("THANKYOU25", 2500);
+    PromoCodePayment payment("THANKYOU25", promos);
+    const PaymentRequest request = requestFor("ada@example.com", 1500);
+
+    assert(payment.process(request).success);
+    payment.rollback(request);
+
+    assert(payment.process(request).success);
+}
+
 void rejectsUnknownAndInsufficientPromoCodesWithoutRedeemingThem() {
     PromoCodeLedger promos;
     promos.addCode("THANKYOU25", 2500);
@@ -60,6 +72,18 @@ void deductsStoreCreditOnlyWhenTheBalanceCoversTheOrder() {
     assert(credit.balanceFor("ada@example.com") == 1800);
 }
 
+void restoresStoreCreditWhenCheckoutIsRolledBack() {
+    StoreCreditLedger credit;
+    credit.addCredit("ada@example.com", 3000);
+    StoreCreditPayment payment(credit);
+    const PaymentRequest request = requestFor("ada@example.com", 1200);
+
+    assert(payment.process(request).success);
+    payment.rollback(request);
+
+    assert(credit.balanceFor("ada@example.com") == 3000);
+}
+
 class DeclinedPayment : public IPaymentType {
 public:
     PaymentResult process(const PaymentRequest&) override {
@@ -84,8 +108,10 @@ void leavesInventoryUnchangedWhenPaymentFails() {
 int main() {
     acceptsCreditCardPayment();
     restrictsPromoCodeToOneRedemptionPerCustomer();
+    restoresPromoCodeRedemptionWhenCheckoutIsRolledBack();
     rejectsUnknownAndInsufficientPromoCodesWithoutRedeemingThem();
     deductsStoreCreditOnlyWhenTheBalanceCoversTheOrder();
+    restoresStoreCreditWhenCheckoutIsRolledBack();
     leavesInventoryUnchangedWhenPaymentFails();
 
     std::cout << "All payment tests passed.\n";

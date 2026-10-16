@@ -52,6 +52,11 @@ bool PromoCodeLedger::redeem(const std::string& code, const std::string& custome
     return true;
 }
 
+void PromoCodeLedger::undoRedemption(const std::string& code,
+                                     const std::string& customerEmail) {
+    redemptions.erase(customerEmail + "\n" + code);
+}
+
 PromoCodePayment::PromoCodePayment(std::string code, PromoCodeLedger& promos)
     : code(std::move(code)), promos(promos) {}
 
@@ -60,7 +65,15 @@ PaymentResult PromoCodePayment::process(const PaymentRequest& request) {
     if (!promos.redeem(code, request.customerEmail, request.totalCents, errorMessage)) {
         return declined(errorMessage);
     }
+    processed = true;
     return {true, "Promo code " + code, ""};
+}
+
+void PromoCodePayment::rollback(const PaymentRequest& request) {
+    if (processed) {
+        promos.undoRedemption(code, request.customerEmail);
+        processed = false;
+    }
 }
 
 void StoreCreditLedger::addCredit(const std::string& customerEmail, int amountCents) {
@@ -86,5 +99,13 @@ PaymentResult StoreCreditPayment::process(const PaymentRequest& request) {
     if (!credit.spend(request.customerEmail, request.totalCents)) {
         return declined("Store credit balance does not cover the order total.");
     }
+    processed = true;
     return {true, "Store credit (" + dollars(request.totalCents) + " redeemed)", ""};
+}
+
+void StoreCreditPayment::rollback(const PaymentRequest& request) {
+    if (processed) {
+        credit.addCredit(request.customerEmail, request.totalCents);
+        processed = false;
+    }
 }
