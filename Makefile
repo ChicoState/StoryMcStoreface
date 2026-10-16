@@ -2,10 +2,12 @@ CXX ?= c++
 CXXFLAGS ?= -std=c++17 -Wall -Wextra -pedantic
 
 TARGET ?= storymcstoreface
-SOURCES := $(wildcard *.cpp)
+SOURCES := $(filter-out PaymentTypesTests.cpp,$(wildcard *.cpp))
 OBJECTS := $(SOURCES:.cpp=.o)
+TEST_TARGET ?= payment_tests
+TEST_SOURCES := PaymentTypesTests.cpp PaymentTypes.cpp
 
-.PHONY: all build run clean
+.PHONY: all build run test clean
 
 all: build
 
@@ -22,5 +24,11 @@ $(TARGET): $(OBJECTS)
 run: $(TARGET)
 	./$(TARGET)
 
+test: $(TEST_TARGET)
+	./$(TEST_TARGET)
+
+$(TEST_TARGET): $(TEST_SOURCES)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o $@
+
 clean:
-	$(RM) $(TARGET) $(OBJECTS) $(OBJECTS:.o=.d)
+	$(RM) $(TARGET) $(TEST_TARGET) $(OBJECTS) $(OBJECTS:.o=.d)
