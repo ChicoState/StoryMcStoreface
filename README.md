@@ -1,6 +1,6 @@
 # StoryMcStoreface
 
-StoryMcStoreface is a small C++ console application for viewing inventory and placing simulated orders. Payments are recorded as local IOU files; no real payment is processed.
+StoryMcStoreface is a small C++ console application for viewing inventory and placing simulated orders. Payments are simulated locally; no real payment is processed.
 
 ## Getting Started
 
@@ -34,7 +34,7 @@ Start the application with:
 make run
 ```
 
-The menu allows you to view inventory, place an order, or exit. When an order is placed, a simulated payment receipt is written to the `payments/` directory.
+The menu allows you to view inventory, place an order, or exit. When an order is placed, one or more simulated payment methods can be selected. Store credit can cover part of an order, with the remaining amount charged to another selected method.
 
 ###  Manually Clean Build Artifacts
 
@@ -76,11 +76,21 @@ classDiagram
         -InventoryManager inventory
         -int nextOrderNumber
         +OrderProcessor(InventoryManager inventory)
-        +bool placeOrder(int productId, int quantity, string customerName, string customerEmail, string cardLastFour)
+        +bool placeOrder(int productId, int quantity, string customerName, string customerEmail, vector~PaymentSelection~ payments)
     }
 
-    class PaymentProcessor {
-        +bool chargeCreditCard(string customerName, string cardLastFour, int totalCents, string orderId)
+    class IPaymentType {
+        +int charge(int totalCents, string customerId, string authentication)
+    }
+
+    class CreditCard
+    class CouponCode
+    class StoreCredit
+
+    class PaymentSelection {
+        +PaymentMethod method
+        +string authentication
+        +int availableCents
     }
 
     class NotificationService {
@@ -89,8 +99,11 @@ classDiagram
 
     InventoryManager *-- Product : stores
     OrderProcessor --> InventoryManager : reads and updates
-    OrderProcessor ..> PaymentProcessor : creates
+    IPaymentType <|.. CreditCard
+    IPaymentType <|.. CouponCode
+    IPaymentType <|.. StoreCredit
+    OrderProcessor ..> IPaymentType : creates
     OrderProcessor ..> NotificationService : creates
 ```
 
-Planned improvements include encapsulating inventory storage, injecting payment and notification interfaces into `OrderProcessor`, and isolating payment persistence behind a repository abstraction.
+Planned improvements include encapsulating inventory storage and isolating notification delivery behind an interface.
