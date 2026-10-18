@@ -1,6 +1,6 @@
 # StoryMcStoreface
 
-StoryMcStoreface is a small C++ console application for viewing inventory and placing simulated orders. Payments are recorded as local IOU files; no real payment is processed.
+StoryMcStoreface is a small C++ console application for viewing inventory and placing simulated orders. Inventory is loaded from `inventory.json` and saved after each successful change. Payments are recorded as local IOU files; no real payment is processed.
 
 ## Getting Started
 
@@ -60,22 +60,26 @@ The current class relationships are represented below. The diagram also highligh
 ```mermaid
 classDiagram
     class InventoryManager {
-        +Product products[5]
-        +int productCount
+        +createProduct(int id, string name, int priceCents, int quantity) bool
+        +readProduct(int id) optional~Product~
+        +readAllProducts() vector~Product~
+        +updateProduct(int id, string name, int priceCents, int quantity) bool
+        +deleteProduct(int id) bool
+        +removeQuantity(int id, int quantity) bool
         +InventoryManager()
     }
 
-    class Product {
-        +int id
-        +string name
-        +int priceCents
-        +int quantity
+    class InventoryManager.Product {
+        +getId() int
+        +getName() string
+        +getPriceCents() int
+        +getQuantity() int
     }
 
     class OrderProcessor {
-        -InventoryManager inventory
+        -InventoryManager inventory reference
         -int nextOrderNumber
-        +OrderProcessor(InventoryManager inventory)
+        +OrderProcessor(InventoryManager inventory reference)
         +bool placeOrder(int productId, int quantity, string customerName, string customerEmail, string cardLastFour)
     }
 
@@ -87,10 +91,10 @@ classDiagram
         +void sendEmail(string recipient, string subject, string message)
     }
 
-    InventoryManager *-- Product : stores
+    InventoryManager *-- InventoryManager.Product : stores
     OrderProcessor --> InventoryManager : reads and updates
     OrderProcessor ..> PaymentProcessor : creates
     OrderProcessor ..> NotificationService : creates
 ```
 
-Planned improvements include encapsulating inventory storage, injecting payment and notification interfaces into `OrderProcessor`, and isolating payment persistence behind a repository abstraction.
+The inventory storage is encapsulated behind `InventoryManager`'s CRUD operations. Planned improvements include injecting payment and notification interfaces into `OrderProcessor`, and isolating payment persistence behind a repository abstraction.

@@ -19,26 +19,19 @@ bool OrderProcessor::placeOrder(int productId, int quantity,
         return false;
     }
 
-    int productIndex = -1;
-    for (int i = 0; i < inventory.productCount; ++i) {
-        if (inventory.products[i].id == productId) {
-            productIndex = i;
-            break;
-        }
-    }
-
-    if (productIndex == -1) {
+    const auto product = inventory.readProduct(productId);
+    if (!product) {
         std::cout << "Product not found.\n";
         return false;
     }
 
-    if (inventory.products[productIndex].quantity < quantity) {
+    if (product->getQuantity() < quantity) {
         std::cout << "Not enough stock available.\n";
         return false;
     }
 
-    const int totalCents = inventory.products[productIndex].priceCents * quantity;
-    const std::string productName = inventory.products[productIndex].name;
+    const int totalCents = product->getPriceCents() * quantity;
+    const std::string productName = product->getName();
 
     const auto now = std::chrono::system_clock::now().time_since_epoch();
     const auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(now).count();
@@ -51,8 +44,7 @@ bool OrderProcessor::placeOrder(int productId, int quantity,
         return false;
     }
 
-    // Tight coupling: directly changes InventoryManager's internal array.
-    inventory.products[productIndex].quantity -= quantity;
+    inventory.removeQuantity(productId, quantity);
 
     // Tight coupling: assumes the only notification is an email.
     std::ostringstream message;

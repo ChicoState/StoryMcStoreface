@@ -25,14 +25,12 @@ int main() {
         if (choice == 3) break;
 
         if (choice == 1) {
-            // Tight coupling: the user interface reads inventory's array directly.
-            for (int i = 0; i < inventory.productCount; ++i) {
-                const InventoryManager::Product& item = inventory.products[i];
-                std::cout << item.id << " | " << item.name << " | $"
-                          << item.priceCents / 100 << '.';
-                if (item.priceCents % 100 < 10) std::cout << '0';
-                std::cout << item.priceCents % 100
-                          << " | In stock: " << item.quantity << '\n';
+            for (const auto& item : inventory.readAllProducts()) {
+                std::cout << item.getId() << " | " << item.getName() << " | $"
+                          << item.getPriceCents() / 100 << '.';
+                if (item.getPriceCents() % 100 < 10) std::cout << '0';
+                std::cout << item.getPriceCents() % 100
+                          << " | In stock: " << item.getQuantity() << '\n';
             }
         } else if (choice == 2) {
             int productId, quantity;
