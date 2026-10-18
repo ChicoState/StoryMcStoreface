@@ -1,6 +1,6 @@
 # StoryMcStoreface
 
-StoryMcStoreface is a small C++ console application for viewing inventory and placing simulated orders. Payments are recorded as local IOU files; no real payment is processed.
+StoryMcStoreface is a small C++ console application for viewing inventory and placing simulated orders. Inventory is loaded from `inventory.json` and saved after each successful change. Payments are recorded as local IOU files; no real payment is processed.
 
 ## Getting Started
 
@@ -49,6 +49,7 @@ make clean
 | Command | Description |
 | --- | --- |
 | `make` or `make build` | Build the application |
+| `make test` | Run the inventory persistence test |
 | `make run` | Build, then launch the application |
 | `make clean` | Remove generated build artifacts |
 | `./test_runner.sh` | Build and run the interactive program |

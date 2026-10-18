@@ -24,7 +24,7 @@ public:
         friend class InventoryManager;
     };
 
-    InventoryManager();
+    explicit InventoryManager(const std::string& filePath = "inventory.json");
     bool createProduct(int id, const std::string& name, int priceCents, int quantity);
     std::optional<Product> readProduct(int id) const;
     std::vector<Product> readAllProducts() const;
@@ -33,7 +33,10 @@ public:
     bool removeQuantity(int id, int quantity);
 
 private:
+    bool save() const;
+
     std::map<int, Product> products;
+    std::string filePath;
 };
 
 #endif
