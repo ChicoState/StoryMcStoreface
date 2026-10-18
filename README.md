@@ -49,7 +49,6 @@ make clean
 | Command | Description |
 | --- | --- |
 | `make` or `make build` | Build the application |
-| `make test` | Run the inventory persistence test |
 | `make run` | Build, then launch the application |
 | `make clean` | Remove generated build artifacts |
 | `./test_runner.sh` | Build and run the interactive program |
