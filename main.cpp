@@ -4,6 +4,7 @@
 #include <iostream>
 #include <limits>
 #include <string>
+#include <vector>
 
 int main() {
     InventoryManager inventory;
@@ -54,20 +55,57 @@ int main() {
             }
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-            std::string name, email, cardLastFour;
+            std::string name, email;
             std::cout << "Customer name: ";
             std::getline(std::cin, name);
             std::cout << "Email (display only; no email is sent): ";
             std::getline(std::cin, email);
-            std::cout << "FAKE card last four digits (e.g., 1234): ";
-            std::getline(std::cin, cardLastFour);
 
-            if (name.empty() || email.empty() || cardLastFour.empty()) {
-                std::cout << "All fields are required.\n";
+            if (name.empty() || email.empty()) {
+                std::cout << "Name and email are required.\n";
                 continue;
             }
 
-            orders.placeOrder(productId, quantity, name, email, cardLastFour);
+            std::vector<PaymentSelection> payments;
+            while (true) {
+                int paymentChoice;
+                std::cout << "Payment method (1=credit card, 2=coupon code, "
+                             "3=store credit, 0=done): ";
+                if (!(std::cin >> paymentChoice)) {
+                    std::cin.clear();
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                    std::cout << "Payment method must be a number.\n";
+                    continue;
+                }
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+                if (paymentChoice == 0) break;
+                if (paymentChoice < 1 || paymentChoice > 3) {
+                    std::cout << "Unknown payment method.\n";
+                    continue;
+                }
+
+                PaymentSelection payment;
+                payment.method = static_cast<PaymentMethod>(paymentChoice - 1);
+                if (paymentChoice == 1) {
+                    std::cout << "12 digit card number: ";
+                } else if (paymentChoice == 2) {
+                    std::cout << "Alphanumeric coupon code: ";
+                } else {
+                    std::cout << "Available store credit in cents: ";
+                    if (!(std::cin >> payment.availableCents)) {
+                        std::cin.clear();
+                        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                        std::cout << "Store credit must be a number.\n";
+                        continue;
+                    }
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                }
+                std::getline(std::cin, payment.authentication);
+                payments.push_back(payment);
+            }
+
+            orders.placeOrder(productId, quantity, name, email, payments);
         } else {
             std::cout << "Unknown menu choice.\n";
         }

@@ -3,6 +3,19 @@
 
 #include "InventoryManager.h"
 #include <string>
+#include <vector>
+
+enum class PaymentMethod {
+    CreditCard,
+    CouponCode,
+    StoreCredit
+};
+
+struct PaymentSelection {
+    PaymentMethod method;
+    std::string authentication;
+    int availableCents = 0;
+};
 
 class OrderProcessor {
 public:
@@ -11,7 +24,7 @@ public:
     bool placeOrder(int productId, int quantity,
                     const std::string& customerName,
                     const std::string& customerEmail,
-                    const std::string& cardLastFour);
+                    const std::vector<PaymentSelection>& payments);
 
 private:
     InventoryManager& inventory;

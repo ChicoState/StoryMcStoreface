@@ -1,10 +1,13 @@
 #include "OrderProcessor.h"
 
+#include "CouponCode.h"
+#include "CreditCard.h"
 #include "NotificationService.h"
-#include "PaymentProcessor.h"
+#include "StoreCredit.h"
 
 #include <chrono>
 #include <iostream>
+#include <memory>
 #include <sstream>
 
 OrderProcessor::OrderProcessor(InventoryManager& inventory)
@@ -13,7 +16,7 @@ OrderProcessor::OrderProcessor(InventoryManager& inventory)
 bool OrderProcessor::placeOrder(int productId, int quantity,
                                 const std::string& customerName,
                                 const std::string& customerEmail,
-                                const std::string& cardLastFour) {
+                                const std::vector<PaymentSelection>& payments) {
     if (quantity <= 0) {
         std::cout << "Quantity must be positive.\n";
         return false;
@@ -45,9 +48,36 @@ bool OrderProcessor::placeOrder(int productId, int quantity,
     const std::string orderId = std::to_string(timestamp) + "_" +
                                 std::to_string(nextOrderNumber++);
 
-    PaymentProcessor payment;
-    if (!payment.chargeCreditCard(customerName, cardLastFour, totalCents, orderId)) {
-        std::cout << "Order canceled: payment record could not be saved.\n";
+    int remainingCents = totalCents;
+    for (const PaymentSelection& selection : payments) {
+        if (remainingCents == 0) {
+            break;
+        }
+
+        std::unique_ptr<IPaymentType> payment;
+        switch (selection.method) {
+            case PaymentMethod::CreditCard:
+                payment = std::make_unique<CreditCard>();
+                break;
+            case PaymentMethod::CouponCode:
+                payment = std::make_unique<CouponCode>();
+                break;
+            case PaymentMethod::StoreCredit:
+                payment = std::make_unique<StoreCredit>(selection.availableCents);
+                break;
+        }
+
+        const int chargedCents = payment->charge(
+            remainingCents, customerEmail, selection.authentication);
+        if (chargedCents <= 0 || chargedCents > remainingCents) {
+            std::cout << "Order canceled: payment could not be completed.\n";
+            return false;
+        }
+        remainingCents -= chargedCents;
+    }
+
+    if (remainingCents > 0) {
+        std::cout << "Order canceled: selected payment methods did not cover the total.\n";
         return false;
     }
 
@@ -63,7 +93,7 @@ bool OrderProcessor::placeOrder(int productId, int quantity,
     message << "Total: $" << totalCents / 100 << '.';
     if (totalCents % 100 < 10) message << '0';
     message << totalCents % 100 << "\n";
-    message << "An IOU file was saved locally; no real payment was made.";
+    message << "Payment was simulated locally; no real payment was made.";
 
     NotificationService notifications;
     notifications.sendEmail(customerEmail, "Order confirmation", message.str());
